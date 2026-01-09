@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
 import Header from "./Header";
 import { checkValidation } from "../utils/validate";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import {auth} from "../utils/firebase"
+
 function Login() {
   const [isSignInForm, setIsSignInForm] = useState(true);
   const [err, setErr] = useState(null);
@@ -8,7 +11,7 @@ function Login() {
     setIsSignInForm(!isSignInForm);
   };
 
-  const name=useRef(null);
+  const name = useRef(null);
   const email = useRef(null);
   const password = useRef(null);
 
@@ -16,9 +19,32 @@ function Login() {
     const message = checkValidation(
       email.current.value,
       password.current.value,
-      isSignInForm?null:name.current.value
+      isSignInForm ? null : name.current.value
     );
     setErr(message);
+
+    if (message) return;
+
+    if (isSignInForm) {
+      signInWithEmailAndPassword(auth, email.current.value, password.current.value)
+  .then((userCredential) => { 
+    const user = userCredential.user;    
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    setErr("User Not found");
+  });
+    } else {
+      createUserWithEmailAndPassword(auth, email.current.value, password.current.value)
+        .then((userCredential) => {
+          const user = userCredential.user;          
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+        });
+    }
   };
 
   return (
@@ -40,7 +66,7 @@ function Login() {
 
         {isSignInForm ? null : (
           <input
-          ref={name}
+            ref={name}
             type="text"
             placeholder="UserName"
             className="p-2 my-2 w-full bg-gray-900"
